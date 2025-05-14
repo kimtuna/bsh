@@ -1,4 +1,4 @@
-package main
+package blockchain
 
 import (
 	"context"
@@ -16,13 +16,14 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// ContractClient 스마트 컨트랙트와 상호작용하는 클라이언트
 type ContractClient struct {
 	client       *ethclient.Client
 	contractAbi  abi.ABI
 	contractAddr common.Address
 }
 
-// 이벤트 로그를 위한 구조체
+// CompanyEvent 컨트랙트 이벤트 로그를 위한 구조체
 type CompanyEvent struct {
 	CompanyAddress common.Address
 	EventType      string // "CompanyRegistered", "SubscriptionExtended", "ServiceExpired"
@@ -30,6 +31,7 @@ type CompanyEvent struct {
 	Data           map[string]interface{}
 }
 
+// NewContractClient 새로운 컨트랙트 클라이언트 생성
 func NewContractClient() (*ContractClient, error) {
 	// .env 파일 로드
 	err := godotenv.Load()
@@ -65,6 +67,7 @@ func NewContractClient() (*ContractClient, error) {
 	}, nil
 }
 
+// GetCompanyInfo 회사 정보 조회
 func (c *ContractClient) GetCompanyInfo(companyAddr common.Address) (string, string, *big.Int, bool, error) {
 	data, err := c.contractAbi.Pack("getCompanyInfo", companyAddr)
 	if err != nil {
@@ -96,6 +99,7 @@ func (c *ContractClient) GetCompanyInfo(companyAddr common.Address) (string, str
 	return name, ceoName, subscriptionEnd, isActive, nil
 }
 
+// CheckSubscription 구독 상태 확인
 func (c *ContractClient) CheckSubscription(companyAddr common.Address) (bool, error) {
 	data, err := c.contractAbi.Pack("checkSubscription", companyAddr)
 	if err != nil {
@@ -121,6 +125,7 @@ func (c *ContractClient) CheckSubscription(companyAddr common.Address) (bool, er
 	return isSubscribed, nil
 }
 
+// SubscribeToEvents 컨트랙트 이벤트 구독
 func (c *ContractClient) SubscribeToEvents(ctx context.Context, eventChan chan<- CompanyEvent) error {
 	// 이벤트 시그니처 해시
 	companyRegisteredSig := []byte("CompanyRegistered(address,string,uint256)")

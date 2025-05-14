@@ -2,11 +2,11 @@ package main
 
 import (
 	"log"
-	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
-
+	"github.com/kimtuna/bsh/blockchain"
+	"github.com/kimtuna/bsh/service"
+	"github.com/kimtuna/bsh/setup"
 )
 
 // 응답 구조체
@@ -18,12 +18,12 @@ type Response struct {
 
 func main() {
 	// 데이터베이스 연결
-	if err := ConnectDatabase(); err != nil {
+	if err := setup.ConnectDatabase(); err != nil {
 		log.Fatal("데이터베이스 연결 실패:", err)
 	}
 
 	// 컨트랙트 클라이언트 초기화
-	contractClient, err := NewContractClient()
+	contractClient, err := blockchain.NewContractClient()
 	if err != nil {
 		log.Fatal("컨트랙트 클라이언트 초기화 실패:", err)
 	}
@@ -47,35 +47,7 @@ func main() {
 	})
 
 	// 회원가입 엔드포인트
-	r.POST("/api/register", func(c *gin.Context) {
-		var req service.RegisterRequest
-		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, Response{
-				Success: false,
-				Message: "잘못된 요청 형식: " + err.Error(),
-			})
-			return
-		}
-
-		err := companyService.RegisterCompany(req)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, Response{
-				Success: false,
-				Message: err.Error(),
-			})
-			return
-		}
-
-		c.JSON(http.StatusOK, Response{
-			Success: true,
-			Message: "회원가입이 완료되었습니다",
-			Data: map[string]interface{}{
-				"company_address": req.CompanyAddress,
-				"company_name":    req.CompanyName,
-				"registered_at":   time.Now().Format(time.RFC3339),
-			},
-		})
-	})
+	r.POST("/api/register", companyService.RegisterCompany)
 
 	// 서버 시작
 	port := ":8080"

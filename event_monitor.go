@@ -9,17 +9,19 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/kimtuna/bsh/blockchain"
 )
 
 func MonitorEvents() {
 	// ContractClient 초기화
-	client, err := NewContractClient()
+	client, err := blockchain.NewContractClient()
 	if err != nil {
 		log.Fatal("컨트랙트 클라이언트 초기화 실패:", err)
 	}
 
 	// 이벤트 채널 생성
-	eventChan := make(chan CompanyEvent, 100)
+	eventChan := make(chan blockchain.CompanyEvent, 100)
 
 	// 컨텍스트 생성
 	ctx, cancel := context.WithCancel(context.Background())
@@ -49,7 +51,7 @@ func MonitorEvents() {
 	}
 }
 
-func handleEvent(event CompanyEvent) {
+func handleEvent(event blockchain.CompanyEvent) {
 	timestamp := time.Unix(int64(event.Timestamp), 0).Format("2006-01-02 15:04:05")
 
 	switch event.EventType {

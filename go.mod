@@ -1,10 +1,13 @@
-module bsh
+module github.com/kimtuna/bsh
 
 go 1.24.2
 
 require (
 	github.com/ethereum/go-ethereum v1.15.11
+	github.com/gin-gonic/gin v1.10.0
 	github.com/joho/godotenv v1.5.1
+	gorm.io/driver/mysql v1.5.7
+	gorm.io/gorm v1.25.7
 )
 
 require (
@@ -25,7 +28,6 @@ require (
 	github.com/ethereum/go-verkle v0.2.2 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
-	github.com/gin-gonic/gin v1.10.0 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
@@ -59,7 +61,5 @@ require (
 	golang.org/x/text v0.25.0 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gorm.io/driver/mysql v1.5.7 // indirect
-	gorm.io/gorm v1.26.1 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
