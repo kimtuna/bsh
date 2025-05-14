@@ -1,5 +1,10 @@
 [
 	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
 		"anonymous": false,
 		"inputs": [
 			{
@@ -61,21 +66,6 @@
 				"internalType": "string",
 				"name": "_ceoName",
 				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_ip",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_serverName",
-				"type": "string"
-			},
-			{
-				"internalType": "uint16",
-				"name": "_port",
-				"type": "uint16"
 			},
 			{
 				"internalType": "uint256",
@@ -183,21 +173,6 @@
 				"type": "string"
 			},
 			{
-				"internalType": "string",
-				"name": "ip",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "serverName",
-				"type": "string"
-			},
-			{
-				"internalType": "uint16",
-				"name": "port",
-				"type": "uint16"
-			},
-			{
 				"internalType": "uint256",
 				"name": "subscriptionEnd",
 				"type": "uint256"
@@ -230,21 +205,6 @@
 				"internalType": "string",
 				"name": "ceoName",
 				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "ip",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "serverName",
-				"type": "string"
-			},
-			{
-				"internalType": "uint16",
-				"name": "port",
-				"type": "uint16"
 			},
 			{
 				"internalType": "uint256",
@@ -287,6 +247,19 @@
 				"internalType": "uint256",
 				"name": "",
 				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
 			}
 		],
 		"stateMutability": "view",

@@ -22,33 +22,35 @@ func NewCompanyService(client *blockchain.ContractClient) *CompanyService {
 	}
 }
 
-// 회사 등록 요청 구조체
-type RegisterRequest struct {
-	CompanyAddress string `json:"company_address" binding:"required"`
-	CompanyName    string `json:"company_name" binding:"required"`
-	IP             string `json:"ip" binding:"required"`
-	ServerName     string `json:"server_name" binding:"required"`
-	Port           string `json:"port" binding:"required"`
-}
-
 // 회사 등록 처리
 func (s *CompanyService) RegisterCompanyInternal(req models.RegisterRequest) error {
-	// 이더리움 주소 유효성 검사
+	// 1. 이더리움 주소 유효성 검사
 	if !common.IsHexAddress(req.CompanyAddress) {
 		return fmt.Errorf("유효하지 않은 이더리움 주소")
 	}
 
-	// 구독 상태 확인
-	isSubscribed, err := s.contractClient.CheckSubscription(common.HexToAddress(req.CompanyAddress))
+	// 2. 스마트 컨트랙트를 통한 회사 등록 트랜잭션 실행
+	tx, err := s.contractClient.RegisterCompany(
+		req.CompanyName,
+		req.CeoName,
+		req.SubscriptionType,
+	)
 	if err != nil {
-		return fmt.Errorf("구독 상태 확인 실패: %v", err)
+		return fmt.Errorf("회사 등록 트랜잭션 실패: %v", err)
 	}
 
-	if !isSubscribed {
-		return fmt.Errorf("구독이 만료되었거나 활성화되지 않은 회사입니다")
+	// 3. 트랜잭션 영수증 확인
+	receipt, err := s.contractClient.WaitForTransaction(tx)
+	if err != nil {
+		return fmt.Errorf("트랜잭션 확인 실패: %v", err)
 	}
 
-	// 서버 접근 정보 저장
+	// 4. 트랜잭션이 성공했는지 확인
+	if receipt.Status != 1 {
+		return fmt.Errorf("트랜잭션이 실패했습니다")
+	}
+
+	// 5. 서버 접근 정보 저장
 	err = setup.SaveServerAccess(req.CompanyAddress, req.IP, req.ServerName, req.Port)
 	if err != nil {
 		return fmt.Errorf("서버 접근 정보 저장 실패: %v", err)
@@ -62,29 +64,29 @@ func (s *CompanyService) GetCompanyInfo(address string) (*models.ServerAccess, e
 	return setup.GetServerAccess(address)
 }
 
-// RegisterCompanyHandler Gin 핸들러
-func (s *CompanyService) RegisterCompanyHandler(c *gin.Context) {
+// RegisterCompany Gin 핸들러
+func (s *CompanyService) RegisterCompany(c *gin.Context) {
 	var req models.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"message": "잘못된 요청 형식: " + err.Error(),
+		c.JSON(http.StatusBadRequest, models.Response{
+			Success: false,
+			Message: "잘못된 요청 형식: " + err.Error(),
 		})
 		return
 	}
 
 	if err := s.RegisterCompanyInternal(req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"message": err.Error(),
+		c.JSON(http.StatusBadRequest, models.Response{
+			Success: false,
+			Message: err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "회원가입이 완료되었습니다",
-		"data": map[string]interface{}{
+	c.JSON(http.StatusOK, models.Response{
+		Success: true,
+		Message: "회원가입이 완료되었습니다",
+		Data: map[string]interface{}{
 			"company_address": req.CompanyAddress,
 			"company_name":    req.CompanyName,
 			"registered_at":   time.Now().Format(time.RFC3339),

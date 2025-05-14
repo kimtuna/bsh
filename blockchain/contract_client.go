@@ -6,14 +6,17 @@ import (
 	"math/big"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/joho/godotenv"
+	"github.com/kimtuna/bsh/contracts"
 )
 
 // ContractClient 스마트 컨트랙트와 상호작용하는 클라이언트
@@ -21,6 +24,8 @@ type ContractClient struct {
 	client       *ethclient.Client
 	contractAbi  abi.ABI
 	contractAddr common.Address
+	contract     *contracts.CompanyServerAccess
+	auth         *bind.TransactOpts
 }
 
 // CompanyEvent 컨트랙트 이벤트 로그를 위한 구조체
@@ -41,6 +46,7 @@ func NewContractClient() (*ContractClient, error) {
 
 	infuraURL := os.Getenv("INFURA_URL")
 	contractAddrStr := os.Getenv("CONTRACT_ADDRESS")
+	privateKeyHex := os.Getenv("PRIVATE_KEY")
 
 	// RPC 연결
 	client, err := ethclient.Dial(infuraURL)
@@ -60,10 +66,30 @@ func NewContractClient() (*ContractClient, error) {
 
 	contractAddress := common.HexToAddress(contractAddrStr)
 
+	// 컨트랙트 인스턴스 생성
+	contract, err := contracts.NewCompanyServerAccess(contractAddress, client)
+	if err != nil {
+		return nil, fmt.Errorf("error creating contract instance: %v", err)
+	}
+
+	privateKey, err := crypto.HexToECDSA(privateKeyHex)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing private key: %v", err)
+	}
+
+	chainIDStr := os.Getenv("CHAIN_ID")
+	chainID, _ := new(big.Int).SetString(chainIDStr, 10)
+	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
+	if err != nil {
+		return nil, fmt.Errorf("error creating auth: %v", err)
+	}
+
 	return &ContractClient{
 		client:       client,
 		contractAbi:  contractAbi,
 		contractAddr: contractAddress,
+		contract:     contract,
+		auth:         auth,
 	}, nil
 }
 
@@ -198,4 +224,41 @@ func (c *ContractClient) SubscribeToEvents(ctx context.Context, eventChan chan<-
 	}()
 
 	return nil
+}
+
+// RegisterCompany 회사 등록 트랜잭션 실행
+func (c *ContractClient) RegisterCompany(name, ceoName string, subscriptionType uint8) (*types.Transaction, error) {
+	// 구독 가격 계산
+	price, err := c.contract.GetSubscriptionPrice(nil, big.NewInt(int64(subscriptionType)))
+	if err != nil {
+		return nil, fmt.Errorf("구독 가격 조회 실패: %v", err)
+	}
+
+	// 트랜잭션 옵션 설정
+	c.auth.Value = price
+
+	// 회사 등록 트랜잭션 실행
+	tx, err := c.contract.RegisterCompany(c.auth, name, ceoName, big.NewInt(int64(subscriptionType)))
+	if err != nil {
+		return nil, fmt.Errorf("회사 등록 트랜잭션 실패: %v", err)
+	}
+
+	return tx, nil
+}
+
+// WaitForTransaction 트랜잭션 영수증 대기
+func (c *ContractClient) WaitForTransaction(tx *types.Transaction) (*types.Receipt, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	receipt, err := bind.WaitMined(ctx, c.client, tx)
+	if err != nil {
+		return nil, fmt.Errorf("트랜잭션 대기 실패: %v", err)
+	}
+
+	if receipt.Status != types.ReceiptStatusSuccessful {
+		return nil, fmt.Errorf("트랜잭션이 실패했습니다")
+	}
+
+	return receipt, nil
 }

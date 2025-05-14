@@ -13,9 +13,9 @@ contract CompanyServerAccess {
     mapping(address => Company) public companies;
     
     // 구독 가격 (wei 단위)
-    uint256 public monthlyPrice = 0.01 ether;    // 1개월
-    uint256 public quarterlyPrice = 0.025 ether; // 3개월
-    uint256 public yearlyPrice = 0.08 ether;     // 1년
+    uint256 public monthlyPrice = 0.000001 ether;    // 1개월 (0.0001 ETH)
+    uint256 public quarterlyPrice = 0.0000025 ether; // 3개월 (0.00025 ETH)
+    uint256 public yearlyPrice = 0.000008 ether;     // 1년 (0.0008 ETH)
     
     // 이벤트
     event CompanyRegistered(address indexed company, string name, uint256 subscriptionEnd);
