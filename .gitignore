@@ -10,19 +10,34 @@ go.work
 
 # 환경 변수
 .env
+.env.*
 
-# IDE 관련
+# 로그 파일
+*.log
+logs/
+
+# IDE 설정
 .idea/
 .vscode/
 *.swp
 *.swo
+.DS_Store
 
 # 빌드 결과물
 bin/
 dist/
 
-# 로그 파일
-*.log
+# 컴파일된 파일
+*.o
+*.a
+*.so
+*.dylib
+
+# 임시 파일
+tmp/
+temp/
+*.tmp
 
 # 기타
-.DS_Store 
+.DS_Store
+Thumbs.db 

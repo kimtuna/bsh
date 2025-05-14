@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kimtuna/bsh/blockchain"
@@ -50,7 +51,11 @@ func main() {
 	r.POST("/api/register", companyService.RegisterCompany)
 
 	// 서버 시작
-	port := ":8080"
+	port := os.Getenv("SERVER_PORT")
+	if port == "" {
+		port = "8080" // 기본값
+	}
+	port = ":" + port
 	log.Printf("API 서버가 %s 포트에서 시작됩니다...\n", port)
 	if err := r.Run(port); err != nil {
 		log.Fatal("서버 시작 실패:", err)
