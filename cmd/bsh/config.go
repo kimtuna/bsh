@@ -2,37 +2,25 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 )
 
 type Config struct {
 	Server struct {
-		Host string `json:"host"`
-		Port int    `json:"port"`
+		Host     string `json:"host"`
+		BasePath string `json:"base_path"`
 	} `json:"server"`
 }
 
 func getDefaultConfig() (Config, error) {
-	portStr := os.Getenv("BSH_CLIENT_PORT")
-	if portStr == "" {
-		return Config{}, fmt.Errorf("BSH_CLIENT_PORT 환경 변수가 설정되지 않았습니다")
-	}
-
-	port, err := strconv.Atoi(portStr)
-	if err != nil {
-		return Config{}, fmt.Errorf("BSH_CLIENT_PORT가 유효한 포트 번호가 아닙니다: %v", err)
-	}
-
 	return Config{
 		Server: struct {
-			Host string `json:"host"`
-			Port int    `json:"port"`
+			Host     string `json:"host"`
+			BasePath string `json:"base_path"`
 		}{
-			Host: "kimtuna.kr",
-			Port: port,
+			Host:     "kimtuna.kr",
+			BasePath: "/bsh/api",
 		},
 	}, nil
 }

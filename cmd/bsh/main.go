@@ -84,7 +84,7 @@ func getInput(prompt string, isPassword bool) string {
 }
 
 func getServerURL(path string) string {
-	return fmt.Sprintf("http://%s:%d%s", config.Server.Host, config.Server.Port, path)
+	return fmt.Sprintf("https://www.%s%s%s", config.Server.Host, config.Server.BasePath, path)
 }
 
 func register() {
@@ -120,16 +120,30 @@ func register() {
 		"port": %s
 	}`, companyWallet, companyName, ceoName, email, subscriptionType, ip, serverName, port)
 
+	// API 요청 URL 생성
+	url := getServerURL("/register")
+	color.Cyan("요청 URL: %s", url)
+	color.Cyan("요청 메소드: POST")
+	color.Cyan("요청 데이터: %s", jsonData)
+
 	// API 요청 전송
-	resp, err := http.Post(getServerURL("/api/register"), "application/json", strings.NewReader(jsonData))
+	resp, err := http.Post(url, "application/json", strings.NewReader(jsonData))
 	if err != nil {
 		color.Red("서버 연결 오류:", err)
 		os.Exit(1)
 	}
 	defer resp.Body.Close()
 
+	// 응답 본문 읽기
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		color.Red("응답 읽기 오류:", err)
+		os.Exit(1)
+	}
+
 	if resp.StatusCode != http.StatusOK {
 		color.Red("등록 실패: HTTP %d", resp.StatusCode)
+		color.Red("응답 내용: %s", string(body))
 		os.Exit(1)
 	}
 
@@ -156,7 +170,7 @@ func login() {
 	jsonData := fmt.Sprintf(`{"company_wallet": "%s"}`, companyWallet)
 
 	// API 요청 전송
-	resp, err := http.Post(getServerURL("/api/login"), "application/json", strings.NewReader(jsonData))
+	resp, err := http.Post(getServerURL("/login"), "application/json", strings.NewReader(jsonData))
 	if err != nil {
 		color.Red("서버 연결 오류:", err)
 		os.Exit(1)

@@ -35,6 +35,9 @@ func main() {
 	// Gin 라우터 초기화
 	r := gin.Default()
 
+	// 프록시 설정
+	r.SetTrustedProxies([]string{"127.0.0.1"})
+
 	// CORS 미들웨어
 	r.Use(func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
@@ -54,6 +57,18 @@ func main() {
 		api.POST("/register", companyService.RegisterCompany)
 		// 회사 로그인
 		api.POST("/login", companyService.Login)
+	}
+
+	// /bsh/api 라우트 (Nginx 프록시용)
+	bsh := r.Group("/bsh")
+	{
+		bshApi := bsh.Group("/api")
+		{
+			// 회사 등록
+			bshApi.POST("/register", companyService.RegisterCompany)
+			// 회사 로그인
+			bshApi.POST("/login", companyService.Login)
+		}
 	}
 
 	// 서버 포트 설정
