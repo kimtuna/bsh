@@ -56,12 +56,13 @@ func main() {
 		api.POST("/login", companyService.Login)
 	}
 
-	// 서버 시작
-	port := os.Getenv("SERVER_PORT")
-	if port == "" {
-		port = "8080" // 기본값
+	// 서버 포트 설정
+	port := ":" + os.Getenv("BSH_SERVER_PORT")
+	if port == ":" {
+		log.Fatal("BSH_SERVER_PORT 환경 변수가 설정되지 않았습니다")
 	}
-	port = ":" + port
+
+	// 서버 시작
 	log.Printf("API 서버가 %s 포트에서 시작됩니다...\n", port)
 	if err := r.Run(port); err != nil {
 		log.Fatal("서버 시작 실패:", err)

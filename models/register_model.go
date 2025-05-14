@@ -22,12 +22,4 @@ type Response struct {
 }
 
 type CompanyRegistered struct {
-	CompanyWallet string `gorm:"primaryKey;column:company_wallet;type:varchar(191)"` // 이더리움 지갑 주소
-	Email         string `gorm:"uniqueIndex:email;type:varchar(50)"`
-	IP            string `gorm:"type:varchar(50)"`
-	ServerName    string `gorm:"type:varchar(30)"`
-	Port          uint16 `gorm:"type:smallint unsigned"`
-	IsActive      bool
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
-}
+	CompanyWallet string `gorm:"primaryKey;column:company_wallet;type:varchar(191)"` // 이더리움 지�
