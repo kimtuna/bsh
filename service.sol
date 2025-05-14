@@ -39,6 +39,8 @@ contract CompanyServerAccess {
         string memory _ceoName,
         uint256 _subscriptionType // 1: 1개월, 2: 3개월, 3: 1년
     ) external payable {
+        require(!companies[msg.sender].isActive, "Company already registered");
+        
         require(msg.value >= getSubscriptionPrice(_subscriptionType), "Insufficient payment");
         uint256 subscriptionDuration;
         if (_subscriptionType == 1) {
