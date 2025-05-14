@@ -1,9 +1,5 @@
 package models
 
-import (
-	"time"
-)
-
 type RegisterRequest struct {
 	CompanyWallet    string `json:"company_wallet" binding:"required"`
 	CompanyName      string `json:"company_name" binding:"required"`
@@ -22,4 +18,12 @@ type Response struct {
 }
 
 type CompanyRegistered struct {
-	CompanyWallet string `gorm:"primaryKey;column:company_wallet;type:varchar(191)"` // 이더리움 지�
+	CompanyWallet string `gorm:"primaryKey;column:company_wallet;type:varchar(191)"` // 이더리움 지갑 주소
+	Email         string `gorm:"uniqueIndex:email;type:varchar(50)"`
+	IP            string `gorm:"type:varchar(50)"`
+	ServerName    string `gorm:"type:varchar(30)"`
+	Port          uint16 `gorm:"type:smallint unsigned"`
+	IsActive      bool
+	CreatedAt     int64 `gorm:"autoCreateTime"` // Unix timestamp
+	UpdatedAt     int64 `gorm:"autoUpdateTime"` // Unix timestamp
+}

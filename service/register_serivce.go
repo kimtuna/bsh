@@ -90,4 +90,7 @@ func (s *CompanyService) RegisterCompany(c *gin.Context) {
 		Data: map[string]interface{}{
 			"company_wallet": req.CompanyWallet,
 			"company_name":   req.CompanyName,
-			"registered_at":  t
+			"registered_at":  time.Now().Format(time.RFC3339),
+		},
+	})
+}
