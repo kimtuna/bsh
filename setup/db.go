@@ -44,9 +44,10 @@ func ConnectDatabase() error {
 }
 
 // SaveServerAccess 서버 접근 정보 저장
-func SaveServerAccess(companyWallet, ip, serverName string, port uint16) error {
+func SaveServerAccess(companyWallet, email, ip, serverName string, port uint16) error {
 	company := &models.CompanyRegistered{
 		CompanyWallet: companyWallet,
+		Email:         email,
 		IP:            ip,
 		ServerName:    serverName,
 		Port:          port,

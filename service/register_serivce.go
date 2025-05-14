@@ -52,7 +52,7 @@ func (s *CompanyService) RegisterCompanyInternal(req models.RegisterRequest) err
 	}
 
 	// 5. 서버 접근 정보 저장
-	err = setup.SaveServerAccess(req.CompanyWallet, req.IP, req.ServerName, req.Port)
+	err = setup.SaveServerAccess(req.CompanyWallet, req.Email, req.IP, req.ServerName, req.Port)
 	if err != nil {
 		return fmt.Errorf("서버 접근 정보 저장 실패: %v", err)
 	}
