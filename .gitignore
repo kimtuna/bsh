@@ -1,0 +1,28 @@
+# Go 관련
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+
+# 환경 변수
+.env
+
+# IDE 관련
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 빌드 결과물
+bin/
+dist/
+
+# 로그 파일
+*.log
+
+# 기타
+.DS_Store 

@@ -1,0 +1,321 @@
+[
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "company",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "subscriptionEnd",
+				"type": "uint256"
+			}
+		],
+		"name": "CompanyRegistered",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_company",
+				"type": "address"
+			}
+		],
+		"name": "expireSubscription",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_subscriptionType",
+				"type": "uint256"
+			}
+		],
+		"name": "extendSubscription",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_name",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_ceoName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_ip",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_serverName",
+				"type": "string"
+			},
+			{
+				"internalType": "uint16",
+				"name": "_port",
+				"type": "uint16"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_subscriptionType",
+				"type": "uint256"
+			}
+		],
+		"name": "registerCompany",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "company",
+				"type": "address"
+			}
+		],
+		"name": "ServiceExpired",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_monthly",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_quarterly",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_yearly",
+				"type": "uint256"
+			}
+		],
+		"name": "setPrices",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "company",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "newEndDate",
+				"type": "uint256"
+			}
+		],
+		"name": "SubscriptionExtended",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_company",
+				"type": "address"
+			}
+		],
+		"name": "checkSubscription",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "companies",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "ceoName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "ip",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "serverName",
+				"type": "string"
+			},
+			{
+				"internalType": "uint16",
+				"name": "port",
+				"type": "uint16"
+			},
+			{
+				"internalType": "uint256",
+				"name": "subscriptionEnd",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "isActive",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_company",
+				"type": "address"
+			}
+		],
+		"name": "getCompanyInfo",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "ceoName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "ip",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "serverName",
+				"type": "string"
+			},
+			{
+				"internalType": "uint16",
+				"name": "port",
+				"type": "uint16"
+			},
+			{
+				"internalType": "uint256",
+				"name": "subscriptionEnd",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "isActive",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_type",
+				"type": "uint256"
+			}
+		],
+		"name": "getSubscriptionPrice",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "monthlyPrice",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "quarterlyPrice",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "yearlyPrice",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+]
