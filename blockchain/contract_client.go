@@ -94,10 +94,10 @@ func NewContractClient() (*ContractClient, error) {
 }
 
 // GetCompanyInfo 회사 정보 조회
-func (c *ContractClient) GetCompanyInfo(companyAddr common.Address) (string, string, *big.Int, bool, error) {
+func (c *ContractClient) GetCompanyInfo(companyAddr common.Address) (string, string, string, *big.Int, bool, error) {
 	data, err := c.contractAbi.Pack("getCompanyInfo", companyAddr)
 	if err != nil {
-		return "", "", nil, false, fmt.Errorf("error packing getCompanyInfo: %v", err)
+		return "", "", "", nil, false, fmt.Errorf("error packing getCompanyInfo: %v", err)
 	}
 
 	callMsg := ethereum.CallMsg{
@@ -107,22 +107,23 @@ func (c *ContractClient) GetCompanyInfo(companyAddr common.Address) (string, str
 
 	result, err := c.client.CallContract(context.Background(), callMsg, nil)
 	if err != nil {
-		return "", "", nil, false, fmt.Errorf("error calling contract: %v", err)
+		return "", "", "", nil, false, fmt.Errorf("error calling contract: %v", err)
 	}
 
 	var (
 		name            string
 		ceoName         string
+		email           string
 		subscriptionEnd *big.Int
 		isActive        bool
 	)
 
-	err = c.contractAbi.UnpackIntoInterface(&[]interface{}{&name, &ceoName, &subscriptionEnd, &isActive}, "getCompanyInfo", result)
+	err = c.contractAbi.UnpackIntoInterface(&[]interface{}{&name, &ceoName, &email, &subscriptionEnd, &isActive}, "getCompanyInfo", result)
 	if err != nil {
-		return "", "", nil, false, fmt.Errorf("error unpacking result: %v", err)
+		return "", "", "", nil, false, fmt.Errorf("error unpacking result: %v", err)
 	}
 
-	return name, ceoName, subscriptionEnd, isActive, nil
+	return name, ceoName, email, subscriptionEnd, isActive, nil
 }
 
 // CheckSubscription 구독 상태 확인
@@ -203,7 +204,8 @@ func (c *ContractClient) SubscribeToEvents(ctx context.Context, eventChan chan<-
 					if err == nil {
 						event.Data = map[string]interface{}{
 							"name":            data[0],
-							"subscriptionEnd": data[1],
+							"email":           data[1],
+							"subscriptionEnd": data[2],
 						}
 					}
 				case subscriptionExtendedHash:
@@ -227,7 +229,7 @@ func (c *ContractClient) SubscribeToEvents(ctx context.Context, eventChan chan<-
 }
 
 // RegisterCompany 회사 등록 트랜잭션 실행
-func (c *ContractClient) RegisterCompany(name, ceoName string, subscriptionType uint8) (*types.Transaction, error) {
+func (c *ContractClient) RegisterCompany(name, ceoName, email string, subscriptionType uint8) (*types.Transaction, error) {
 	// 구독 가격 계산
 	price, err := c.contract.GetSubscriptionPrice(nil, big.NewInt(int64(subscriptionType)))
 	if err != nil {
@@ -238,7 +240,7 @@ func (c *ContractClient) RegisterCompany(name, ceoName string, subscriptionType 
 	c.auth.Value = price
 
 	// 회사 등록 트랜잭션 실행
-	tx, err := c.contract.RegisterCompany(c.auth, name, ceoName, big.NewInt(int64(subscriptionType)))
+	tx, err := c.contract.RegisterCompany(c.auth, name, ceoName, email, big.NewInt(int64(subscriptionType)))
 	if err != nil {
 		return nil, fmt.Errorf("회사 등록 트랜잭션 실패: %v", err)
 	}

@@ -25,7 +25,7 @@ func NewCompanyService(client *blockchain.ContractClient) *CompanyService {
 // 회사 등록 처리
 func (s *CompanyService) RegisterCompanyInternal(req models.RegisterRequest) error {
 	// 1. 이더리움 주소 유효성 검사
-	if !common.IsHexAddress(req.CompanyAddress) {
+	if !common.IsHexAddress(req.CompanyWallet) {
 		return fmt.Errorf("유효하지 않은 이더리움 주소")
 	}
 
@@ -33,6 +33,7 @@ func (s *CompanyService) RegisterCompanyInternal(req models.RegisterRequest) err
 	tx, err := s.contractClient.RegisterCompany(
 		req.CompanyName,
 		req.CeoName,
+		req.Email,
 		req.SubscriptionType,
 	)
 	if err != nil {
@@ -51,7 +52,7 @@ func (s *CompanyService) RegisterCompanyInternal(req models.RegisterRequest) err
 	}
 
 	// 5. 서버 접근 정보 저장
-	err = setup.SaveServerAccess(req.CompanyAddress, req.IP, req.ServerName, req.Port)
+	err = setup.SaveServerAccess(req.CompanyWallet, req.IP, req.ServerName, req.Port)
 	if err != nil {
 		return fmt.Errorf("서버 접근 정보 저장 실패: %v", err)
 	}
@@ -60,7 +61,7 @@ func (s *CompanyService) RegisterCompanyInternal(req models.RegisterRequest) err
 }
 
 // 회사 정보 조회
-func (s *CompanyService) GetCompanyInfo(address string) (*models.ServerAccess, error) {
+func (s *CompanyService) GetCompanyInfo(address string) (*models.CompanyRegistered, error) {
 	return setup.GetServerAccess(address)
 }
 
@@ -87,9 +88,9 @@ func (s *CompanyService) RegisterCompany(c *gin.Context) {
 		Success: true,
 		Message: "회원가입이 완료되었습니다",
 		Data: map[string]interface{}{
-			"company_address": req.CompanyAddress,
-			"company_name":    req.CompanyName,
-			"registered_at":   time.Now().Format(time.RFC3339),
+			"company_wallet": req.CompanyWallet,
+			"company_name":   req.CompanyName,
+			"registered_at":  time.Now().Format(time.RFC3339),
 		},
 	})
 }

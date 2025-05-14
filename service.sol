@@ -5,6 +5,7 @@ contract CompanyServerAccess {
     struct Company {
         string name;
         string ceoName;
+        string email;
         uint256 subscriptionEnd;  // 구독 만료일
         bool isActive;            // 서비스 활성화 상태
     }
@@ -18,7 +19,7 @@ contract CompanyServerAccess {
     uint256 public yearlyPrice = 0.000008 ether;     // 1년 (0.0008 ETH)
     
     // 이벤트
-    event CompanyRegistered(address indexed company, string name, uint256 subscriptionEnd);
+    event CompanyRegistered(address indexed company, string name, string email, uint256 subscriptionEnd);
     event SubscriptionExtended(address indexed company, uint256 newEndDate);
     event ServiceExpired(address indexed company);
     
@@ -37,6 +38,7 @@ contract CompanyServerAccess {
     function registerCompany(
         string memory _name,
         string memory _ceoName,
+        string memory _email,
         uint256 _subscriptionType // 1: 1개월, 2: 3개월, 3: 1년
     ) external payable {
         require(!companies[msg.sender].isActive, "Company already registered");
@@ -55,10 +57,11 @@ contract CompanyServerAccess {
         companies[msg.sender] = Company({
             name: _name,
             ceoName: _ceoName,
+            email: _email,
             subscriptionEnd: block.timestamp + subscriptionDuration,
             isActive: true
         });
-        emit CompanyRegistered(msg.sender, _name, block.timestamp + subscriptionDuration);
+        emit CompanyRegistered(msg.sender, _name, _email, block.timestamp + subscriptionDuration);
     }
     
     // 구독 연장
@@ -99,6 +102,7 @@ contract CompanyServerAccess {
     function getCompanyInfo(address _company) external view returns (
         string memory name,
         string memory ceoName,
+        string memory email,
         uint256 subscriptionEnd,
         bool isActive
     ) {
@@ -106,6 +110,7 @@ contract CompanyServerAccess {
         return (
             company.name,
             company.ceoName,
+            company.email,
             company.subscriptionEnd,
             company.isActive
         );

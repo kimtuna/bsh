@@ -21,6 +21,12 @@
 			},
 			{
 				"indexed": false,
+				"internalType": "string",
+				"name": "email",
+				"type": "string"
+			},
+			{
+				"indexed": false,
 				"internalType": "uint256",
 				"name": "subscriptionEnd",
 				"type": "uint256"
@@ -65,6 +71,11 @@
 			{
 				"internalType": "string",
 				"name": "_ceoName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_email",
 				"type": "string"
 			},
 			{
@@ -173,6 +184,11 @@
 				"type": "string"
 			},
 			{
+				"internalType": "string",
+				"name": "email",
+				"type": "string"
+			},
+			{
 				"internalType": "uint256",
 				"name": "subscriptionEnd",
 				"type": "uint256"
@@ -204,6 +220,11 @@
 			{
 				"internalType": "string",
 				"name": "ceoName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "email",
 				"type": "string"
 			},
 			{

@@ -47,8 +47,14 @@ func main() {
 		c.Next()
 	})
 
-	// 회원가입 엔드포인트
-	r.POST("/api/register", companyService.RegisterCompany)
+	// API 라우트
+	api := r.Group("/api")
+	{
+		// 회사 등록
+		api.POST("/register", companyService.RegisterCompany)
+		// 회사 로그인
+		api.POST("/login", companyService.Login)
+	}
 
 	// 서버 시작
 	port := os.Getenv("SERVER_PORT")

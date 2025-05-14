@@ -34,7 +34,7 @@ func ConnectDatabase() error {
 	}
 
 	// 테이블 자동 마이그레이션
-	err = DB.AutoMigrate(&models.ServerAccess{})
+	err = DB.AutoMigrate(&models.CompanyRegistered{})
 	if err != nil {
 		return fmt.Errorf("failed to migrate database: %v", err)
 	}
@@ -44,27 +44,21 @@ func ConnectDatabase() error {
 }
 
 // SaveServerAccess 서버 접근 정보 저장
-func SaveServerAccess(companyAddress, ip, serverName, port string) error {
-	serverAccess := &models.ServerAccess{
-		CompanyAddress: companyAddress,
-		IP:             ip,
-		ServerName:     serverName,
-		Port:           port,
-		IsActive:       true,
+func SaveServerAccess(companyWallet, ip, serverName string, port uint16) error {
+	company := &models.CompanyRegistered{
+		CompanyWallet: companyWallet,
+		IP:            ip,
+		ServerName:    serverName,
+		Port:          port,
+		IsActive:      true,
 	}
-
-	result := DB.Create(serverAccess)
-	if result.Error != nil {
-		return fmt.Errorf("failed to save server access: %v", result.Error)
-	}
-
-	return nil
+	return DB.Create(company).Error
 }
 
-// GetServerAccess 회사 주소로 서버 접근 정보 조회
-func GetServerAccess(companyAddress string) (*models.ServerAccess, error) {
-	var serverAccess models.ServerAccess
-	result := DB.Where("company_address = ? AND is_active = ?", companyAddress, true).First(&serverAccess)
+// GetServerAccess 회사 지갑 주소로 서버 접근 정보 조회
+func GetServerAccess(companyWallet string) (*models.CompanyRegistered, error) {
+	var serverAccess models.CompanyRegistered
+	result := DB.Where("company_wallet = ? AND is_active = ?", companyWallet, true).First(&serverAccess)
 	if result.Error != nil {
 		return nil, fmt.Errorf("failed to get server access: %v", result.Error)
 	}
@@ -73,9 +67,9 @@ func GetServerAccess(companyAddress string) (*models.ServerAccess, error) {
 }
 
 // DeactivateServerAccess 서버 접근 비활성화
-func DeactivateServerAccess(companyAddress string) error {
-	result := DB.Model(&models.ServerAccess{}).
-		Where("company_address = ? AND is_active = ?", companyAddress, true).
+func DeactivateServerAccess(companyWallet string) error {
+	result := DB.Model(&models.CompanyRegistered{}).
+		Where("company_wallet = ? AND is_active = ?", companyWallet, true).
 		Update("is_active", false)
 	if result.Error != nil {
 		return fmt.Errorf("failed to deactivate server access: %v", result.Error)
