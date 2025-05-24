@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    container_name: bsh-api
+    restart: always
+    ports:
+      - "${BSH_SERVER_PORT}:${BSH_SERVER_PORT}"
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - DB_PORT=${DB_PORT}
+      - ETH_NODE_URL=${INFURA_URL}
+      - CONTRACT_ADDRESS=${CONTRACT_ADDRESS}
+      - CHAIN_ID=${CHAIN_ID}
+      - PRIVATE_KEY=${PRIVATE_KEY}
+      - BSH_SERVER_PORT=${BSH_SERVER_PORT}
+      - LOG_LEVEL=${LOG_LEVEL}
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15-alpine
+    container_name: bsh-db
+    restart: always
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - .env
+
+volumes:
+  postgres_data: 

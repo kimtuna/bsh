@@ -43,3 +43,12 @@ temp/
 Thumbs.db
 
 .abi.json
+
+# 도커 볼륨
+postgres_data/
+
+# 바이너리
+bsh-api
+
+# 의존성 디렉토리
+vendor/
