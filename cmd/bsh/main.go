@@ -120,21 +120,15 @@ func register() {
 		"port": %s
 	}`, companyWallet, companyName, ceoName, email, subscriptionType, ip, serverName, port)
 
-	// API 요청 URL 생성
-	url := getServerURL("/register")
-	color.Cyan("요청 URL: %s", url)
-	color.Cyan("요청 메소드: POST")
-	color.Cyan("요청 데이터: %s", jsonData)
-
 	// API 요청 전송
-	resp, err := http.Post(url, "application/json", strings.NewReader(jsonData))
+	resp, err := http.Post(getServerURL("/register"), "application/json", strings.NewReader(jsonData))
 	if err != nil {
 		color.Red("서버 연결 오류:", err)
 		os.Exit(1)
 	}
 	defer resp.Body.Close()
 
-	// 응답 본문 읽기
+	// 응답 처리
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		color.Red("응답 읽기 오류:", err)
@@ -166,18 +160,15 @@ func login() {
 
 	companyWallet := getInput("회사 지갑 주소: ", false)
 
-	// API 요청 데이터 구성
-	jsonData := fmt.Sprintf(`{"company_wallet": "%s"}`, companyWallet)
-
 	// API 요청 전송
-	resp, err := http.Post(getServerURL("/login"), "application/json", strings.NewReader(jsonData))
+	resp, err := http.Post(getServerURL("/login"), "application/json", strings.NewReader(fmt.Sprintf(`{"company_wallet": "%s"}`, companyWallet)))
 	if err != nil {
 		color.Red("서버 연결 오류:", err)
 		os.Exit(1)
 	}
 	defer resp.Body.Close()
 
-	// 응답 본문 읽기
+	// 응답 처리
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		color.Red("응답 읽기 오류:", err)
@@ -189,7 +180,6 @@ func login() {
 		os.Exit(1)
 	}
 
-	// JSON 응답 파싱
 	var loginResp LoginResponse
 	if err := json.Unmarshal(body, &loginResp); err != nil {
 		color.Red("응답 파싱 오류:", err)
@@ -207,7 +197,7 @@ func login() {
 	color.Cyan("- 서버 이름: %s", loginResp.Data.ServerName)
 	color.Cyan("- 포트: %d", loginResp.Data.Port)
 
-	// SSH 명령어 실행
+	// SSH 접속
 	cmd := exec.Command("bash", "-c", loginResp.Data.SSHCommand)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
