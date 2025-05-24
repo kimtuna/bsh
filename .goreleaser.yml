@@ -8,12 +8,7 @@ builds:
     goos:
       - darwin
     goarch:
-      - amd64
-      - arm64
-    ignore:
-      - goos: darwin
-        goarch: amd64
-        ignore: true # M1/M2 맥만 지원
+      - arm64  # M1/M2 맥만 지원
     main: ./cmd/bsh
     binary: bsh
 
