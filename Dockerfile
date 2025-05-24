@@ -10,7 +10,7 @@ COPY . .
 
 # 의존성 다운로드 및 빌드
 RUN go mod download
-RUN go build -o bsh-api ./cmd/api
+RUN go build -o bsh-api main.go
 
 # 2222 포트 노출
 EXPOSE 2222
