@@ -28,8 +28,8 @@ func loadConfig() (*Config, error) {
 	if err != nil {
 		// 설정 파일이 없으면 기본값 사용
 		config := &Config{}
-		config.Server.Host = "bsh.kimtuna.com"
-		config.Server.BasePath = "/api"
+		config.Server.Host = "kimtuna.kr"
+		config.Server.BasePath = "/bsh/api"
 		return config, nil
 	}
 
