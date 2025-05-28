@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/joho/godotenv"
 	"github.com/kimtuna/bsh/models"
@@ -15,10 +16,36 @@ var DB *gorm.DB
 
 // ConnectDatabase 데이터베이스 연결
 func ConnectDatabase() error {
-	err := godotenv.Load()
+	// 현재 작업 디렉토리 출력
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("현재 디렉토리 확인 실패: %v", err)
+	}
+	log.Printf("현재 작업 디렉토리: %s", currentDir)
+
+	// .env 파일 경로 출력
+	envPath := filepath.Join(currentDir, ".env")
+	log.Printf(".env 파일 경로: %s", envPath)
+
+	// .env 파일 존재 여부 확인
+	if _, err := os.Stat(envPath); os.IsNotExist(err) {
+		log.Printf("경고: .env 파일이 존재하지 않습니다: %s", envPath)
+	} else {
+		log.Printf(".env 파일이 존재합니다: %s", envPath)
+	}
+
+	// 환경 변수 출력 (디버깅용)
+	log.Printf("현재 DB_HOST: %s", os.Getenv("DB_HOST"))
+	log.Printf("현재 DB_PORT: %s", os.Getenv("DB_PORT"))
+
+	err = godotenv.Load()
 	if err != nil {
 		return fmt.Errorf("error loading .env file: %v", err)
 	}
+
+	// .env 로드 후 환경 변수 출력
+	log.Printf(".env 로드 후 DB_HOST: %s", os.Getenv("DB_HOST"))
+	log.Printf(".env 로드 후 DB_PORT: %s", os.Getenv("DB_PORT"))
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 		os.Getenv("DB_USER"),
@@ -27,6 +54,8 @@ func ConnectDatabase() error {
 		os.Getenv("DB_PORT"),
 		os.Getenv("DB_NAME"),
 	)
+
+	log.Printf("데이터베이스 연결 문자열: %s", dsn)
 
 	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
@@ -78,4 +107,3 @@ func DeactivateServerAccess(companyWallet string) error {
 
 	return nil
 }
- 

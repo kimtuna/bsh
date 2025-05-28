@@ -1,19 +1,35 @@
-FROM golang:1.24-alpine
+# 빌드 스테이지
+FROM golang:1.21-alpine AS builder
 
 WORKDIR /app
 
-# 필요한 패키지 설치
-RUN apk add --no-cache gcc musl-dev
+# 빌드에 필요한 패키지 설치
+RUN apk add --no-cache git
 
 # 소스 코드 복사
 COPY . .
 
 # 의존성 다운로드 및 빌드
 RUN go mod download
-RUN go build -o bsh-api main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o bsh-api main.go
 
-# 2222 포트 노출
-EXPOSE 2222
+# 실행 스테이지
+FROM alpine:latest
+
+WORKDIR /app
+
+# SSL 인증서 및 타임존 설정
+RUN apk add --no-cache ca-certificates tzdata
+
+# 빌드된 바이너리 복사
+COPY --from=builder /app/bsh-api .
+COPY --from=builder /app/.env .
+
+# 실행 권한 설정
+RUN chmod +x bsh-api
+
+# 포트 노출
+EXPOSE 1111
 
 # 실행
 CMD ["./bsh-api"] 
