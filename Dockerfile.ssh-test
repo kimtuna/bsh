@@ -1,0 +1,12 @@
+FROM ubuntu:22.04
+
+# SSH 클라이언트 설치
+RUN apt-get update && apt-get install -y openssh-client
+
+# 테스트 스크립트 복사
+COPY scripts/test_ssh.sh /app/test_ssh.sh
+RUN chmod +x /app/test_ssh.sh
+
+WORKDIR /app
+
+ENTRYPOINT ["/app/test_ssh.sh"] 

@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"net/http"
+	"os/exec"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -10,7 +11,6 @@ import (
 	"github.com/kimtuna/bsh/blockchain"
 	"github.com/kimtuna/bsh/models"
 	"github.com/kimtuna/bsh/setup"
-	"golang.org/x/crypto/ssh"
 )
 
 type CompanyService struct {
@@ -25,21 +25,19 @@ func NewCompanyService(client *blockchain.ContractClient) *CompanyService {
 
 // testServerAccess 서버 접근 테스트
 func testServerAccess(ip string, port uint16, username string, password string) error {
-	// SSH 연결 테스트
-	config := &ssh.ClientConfig{
-		User: username,
-		Auth: []ssh.AuthMethod{
-			ssh.Password(password), // 비밀번호 인증
-			ssh.PublicKeys(),       // SSH 키 인증 (기존 방식)
-		},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		Timeout:         5 * time.Second, // 5초 타임아웃
-	}
+	// Docker 명령어 구성
+	cmd := exec.Command("docker", "run", "--rm",
+		"bsh-ssh-test",
+		ip,
+		fmt.Sprintf("%d", port),
+		username,
+		password,
+	)
 
-	// 서버 연결 시도
-	_, err := ssh.Dial("tcp", fmt.Sprintf("%s:%d", ip, port), config)
+	// 명령어 실행
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("서버에 접근할 수 없습니다 (IP: %s, Port: %d): %v", ip, port, err)
+		return fmt.Errorf("서버에 접근할 수 없습니다 (IP: %s, Port: %d): %v", ip, port, string(output))
 	}
 
 	return nil
@@ -90,8 +88,14 @@ func (s *CompanyService) RegisterCompanyInternal(req models.RegisterRequest) err
 
 // RegisterCompany Gin 핸들러
 func (s *CompanyService) RegisterCompany(c *gin.Context) {
+	fmt.Printf("[DEBUG] RegisterCompany 요청 시작\n")
+
 	var req models.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		fmt.Printf("[DEBUG] JSON 바인딩 오류: %v\n", err)
+		if body, err := c.GetRawData(); err == nil {
+			fmt.Printf("[DEBUG] 요청 본문: %s\n", string(body))
+		}
 		c.JSON(http.StatusBadRequest, models.Response{
 			Success: false,
 			Message: "잘못된 요청 형식: " + err.Error(),
@@ -99,7 +103,10 @@ func (s *CompanyService) RegisterCompany(c *gin.Context) {
 		return
 	}
 
+	fmt.Printf("[DEBUG] 요청 데이터: %+v\n", req)
+
 	if err := s.RegisterCompanyInternal(req); err != nil {
+		fmt.Printf("[DEBUG] 회사 등록 실패: %v\n", err)
 		c.JSON(http.StatusBadRequest, models.Response{
 			Success: false,
 			Message: err.Error(),
@@ -107,6 +114,7 @@ func (s *CompanyService) RegisterCompany(c *gin.Context) {
 		return
 	}
 
+	fmt.Printf("[DEBUG] 회사 등록 성공: %s\n", req.CompanyWallet)
 	c.JSON(http.StatusOK, models.Response{
 		Success: true,
 		Message: "회원가입이 완료되었습니다",
