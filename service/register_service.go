@@ -6,6 +6,8 @@ import (
 	"os/exec"
 	"time"
 
+	"log"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gin-gonic/gin"
 	"github.com/kimtuna/bsh/blockchain"
@@ -25,21 +27,12 @@ func NewCompanyService(client *blockchain.ContractClient) *CompanyService {
 
 // testServerAccess 서버 접근 테스트
 func testServerAccess(ip string, port uint16, username string, password string) error {
-	// Docker 명령어 구성
-	cmd := exec.Command("docker", "run", "--rm",
-		"bsh-ssh-test",
-		ip,
-		fmt.Sprintf("%d", port),
-		username,
-		password,
-	)
-
-	// 명령어 실행
+	// ping으로 서버 연결 테스트
+	cmd := exec.Command("ping", "-c", "4", ip)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("서버에 접근할 수 없습니다 (IP: %s, Port: %d): %v", ip, port, string(output))
+		return fmt.Errorf("서버에 ping이 되지 않습니다 (IP: %s): %v", ip, string(output))
 	}
-
 	return nil
 }
 
@@ -104,6 +97,16 @@ func (s *CompanyService) RegisterCompany(c *gin.Context) {
 	}
 
 	fmt.Printf("[DEBUG] 요청 데이터: %+v\n", req)
+
+	// 서버 연결 테스트 (직접 ping 사용)
+	if err := testServerAccess(req.IP, req.Port, req.ServerName, req.Password); err != nil {
+		log.Printf("Server connection test failed: %v", err)
+		c.JSON(http.StatusBadRequest, models.Response{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
 
 	if err := s.RegisterCompanyInternal(req); err != nil {
 		fmt.Printf("[DEBUG] 회사 등록 실패: %v\n", err)
