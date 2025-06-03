@@ -9,6 +9,7 @@ type RegisterRequest struct {
 	IP               string `json:"ip" binding:"required"`
 	ServerName       string `json:"server_name" binding:"required"`
 	Port             uint16 `json:"port" binding:"required,min=1,max=65535"`
+	Password         string `json:"password" binding:"required"` // SSH 비밀번호
 }
 
 type Response struct {

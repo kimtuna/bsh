@@ -24,12 +24,13 @@ func NewCompanyService(client *blockchain.ContractClient) *CompanyService {
 }
 
 // testServerAccess 서버 접근 테스트
-func testServerAccess(ip string, port uint16) error {
+func testServerAccess(ip string, port uint16, username string, password string) error {
 	// SSH 연결 테스트
 	config := &ssh.ClientConfig{
-		User: "root",
+		User: username,
 		Auth: []ssh.AuthMethod{
-			ssh.PublicKeys(), // SSH 키 인증
+			ssh.Password(password), // 비밀번호 인증
+			ssh.PublicKeys(),       // SSH 키 인증 (기존 방식)
 		},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		Timeout:         5 * time.Second, // 5초 타임아웃
@@ -47,7 +48,7 @@ func testServerAccess(ip string, port uint16) error {
 // RegisterCompanyInternal 회사 등록 처리
 func (s *CompanyService) RegisterCompanyInternal(req models.RegisterRequest) error {
 	// 1. 서버 접근 테스트
-	if err := testServerAccess(req.IP, req.Port); err != nil {
+	if err := testServerAccess(req.IP, req.Port, req.ServerName, req.Password); err != nil {
 		return fmt.Errorf("서버 접근 실패: %v", err)
 	}
 

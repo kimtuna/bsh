@@ -103,13 +103,14 @@ func register() {
 
 	ip := getInput("서버 IP: ", false)
 	serverName := getInput("서버 이름: ", false)
-	port := getInput("SSH 포트 (기본값: 22): ", false)
+	port := getInput("서버 포트 (기본값: 22): ", false)
 	if port == "" {
 		port = "22"
 	}
+	password := getInput("서버 비밀번호: ", true)
 
 	// API 요청 데이터 구성
-	jsonData := fmt.Sprintf(`{
+	jsonData := fmt.Sprintf(`버
 		"company_wallet": "%s",
 		"company_name": "%s",
 		"ceo_name": "%s",
@@ -117,8 +118,9 @@ func register() {
 		"subscription_type": %s,
 		"ip": "%s",
 		"server_name": "%s",
-		"port": %s
-	}`, companyWallet, companyName, ceoName, email, subscriptionType, ip, serverName, port)
+		"port": %s,
+		"password": "%s"
+	}`, companyWallet, companyName, ceoName, email, subscriptionType, ip, serverName, port, password)
 
 	// API 요청 전송
 	resp, err := http.Post(getServerURL("/register"), "application/json", strings.NewReader(jsonData))
@@ -204,7 +206,7 @@ func login() {
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Run(); err != nil {
-		color.Red("SSH 접속 실패:", err)
+		color.Red("서버 접속 실패:", err)
 		os.Exit(1)
 	}
 }
