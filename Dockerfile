@@ -1,12 +1,14 @@
 # 빌드 스테이지
-FROM golang:1.21-alpine AS builder
+FROM golang:1.24.2-alpine AS builder
 
 WORKDIR /app
 
 # 빌드에 필요한 패키지 설치
 RUN apk add --no-cache git
 
-# 소스 코드 복사
+# 소스 코드와 필요한 파일들 복사
+COPY go.mod go.sum ./
+COPY abi.json ./
 COPY . .
 
 # 의존성 다운로드 및 빌드
@@ -21,9 +23,10 @@ WORKDIR /app
 # SSL 인증서 및 타임존 설정
 RUN apk add --no-cache ca-certificates tzdata
 
-# 빌드된 바이너리 복사
+# 빌드된 바이너리와 필요한 파일들 복사
 COPY --from=builder /app/bsh-api .
-COPY --from=builder /app/.env .
+COPY .env .
+COPY abi.json .
 
 # 실행 권한 설정
 RUN chmod +x bsh-api
