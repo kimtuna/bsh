@@ -36,12 +36,13 @@ contract CompanyServerAccess {
     
     // 회사 등록 및 구독
     function registerCompany(
+        address _companyWallet,  // 회사 지갑 주소 추가
         string memory _name,
         string memory _ceoName,
         string memory _email,
         uint256 _subscriptionType // 1: 1개월, 2: 3개월, 3: 1년
     ) external payable {
-        require(!companies[msg.sender].isActive, "Company already registered");
+        require(!companies[_companyWallet].isActive, "Company already registered");
         
         require(msg.value >= getSubscriptionPrice(_subscriptionType), "Insufficient payment");
         uint256 subscriptionDuration;
@@ -54,19 +55,22 @@ contract CompanyServerAccess {
         } else {
             revert("Invalid subscription type");
         }
-        companies[msg.sender] = Company({
+        companies[_companyWallet] = Company({
             name: _name,
             ceoName: _ceoName,
             email: _email,
             subscriptionEnd: block.timestamp + subscriptionDuration,
             isActive: true
         });
-        emit CompanyRegistered(msg.sender, _name, _email, block.timestamp + subscriptionDuration);
+        emit CompanyRegistered(_companyWallet, _name, _email, block.timestamp + subscriptionDuration);
     }
     
     // 구독 연장
-    function extendSubscription(uint256 _subscriptionType) external payable {
-        require(companies[msg.sender].isActive, "Company not registered");
+    function extendSubscription(
+        address _companyWallet,  // 회사 지갑 주소 추가
+        uint256 _subscriptionType
+    ) external payable {
+        require(companies[_companyWallet].isActive, "Company not registered");
         require(msg.value >= getSubscriptionPrice(_subscriptionType), "Insufficient payment");
         
         uint256 subscriptionDuration;
@@ -80,8 +84,8 @@ contract CompanyServerAccess {
             revert("Invalid subscription type");
         }
         
-        companies[msg.sender].subscriptionEnd = block.timestamp + subscriptionDuration; // 구독 끝날 경우 서비스 중지
-        emit SubscriptionExtended(msg.sender, block.timestamp + subscriptionDuration);
+        companies[_companyWallet].subscriptionEnd = block.timestamp + subscriptionDuration;
+        emit SubscriptionExtended(_companyWallet, block.timestamp + subscriptionDuration);
     }
     
     // 구독 상태 확인
