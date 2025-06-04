@@ -51,6 +51,11 @@
 	{
 		"inputs": [
 			{
+				"internalType": "address",
+				"name": "_companyWallet",
+				"type": "address"
+			},
+			{
 				"internalType": "uint256",
 				"name": "_subscriptionType",
 				"type": "uint256"
@@ -63,6 +68,11 @@
 	},
 	{
 		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_companyWallet",
+				"type": "address"
+			},
 			{
 				"internalType": "string",
 				"name": "_name",

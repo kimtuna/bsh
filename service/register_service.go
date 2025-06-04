@@ -31,7 +31,7 @@ func testServerAccess(ip string, port uint16, username string, password string) 
 	cmd := exec.Command("ping", "-c", "4", ip)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("서버에 ping이 되지 않습니다 (IP: %s): %v", ip, string(output))
+		return fmt.Errorf("서버가 없습니다 (IP: %s): %v", ip, string(output))
 	}
 	return nil
 }
@@ -50,6 +50,7 @@ func (s *CompanyService) RegisterCompanyInternal(req models.RegisterRequest) err
 
 	// 3. 스마트 컨트랙트를 통한 회사 등록 트랜잭션 실행
 	tx, err := s.contractClient.RegisterCompany(
+		common.HexToAddress(req.CompanyWallet),
 		req.CompanyName,
 		req.CeoName,
 		req.Email,

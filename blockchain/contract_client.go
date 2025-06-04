@@ -229,7 +229,7 @@ func (c *ContractClient) SubscribeToEvents(ctx context.Context, eventChan chan<-
 }
 
 // RegisterCompany 회사 등록 트랜잭션 실행
-func (c *ContractClient) RegisterCompany(name, ceoName, email string, subscriptionType uint8) (*types.Transaction, error) {
+func (c *ContractClient) RegisterCompany(companyWallet common.Address, name, ceoName, email string, subscriptionType uint8) (*types.Transaction, error) {
 	// 구독 가격 계산
 	price, err := c.contract.GetSubscriptionPrice(nil, big.NewInt(int64(subscriptionType)))
 	if err != nil {
@@ -240,7 +240,7 @@ func (c *ContractClient) RegisterCompany(name, ceoName, email string, subscripti
 	c.auth.Value = price
 
 	// 회사 등록 트랜잭션 실행
-	tx, err := c.contract.RegisterCompany(c.auth, name, ceoName, email, big.NewInt(int64(subscriptionType)))
+	tx, err := c.contract.RegisterCompany(c.auth, companyWallet, name, ceoName, email, big.NewInt(int64(subscriptionType)))
 	if err != nil {
 		return nil, fmt.Errorf("회사 등록 트랜잭션 실패: %v", err)
 	}

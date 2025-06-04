@@ -110,7 +110,7 @@ func register() {
 	password := getInput("서버 비밀번호: ", true)
 
 	// API 요청 데이터 구성
-	jsonData := fmt.Sprintf(`버
+	jsonData := fmt.Sprintf(`{
 		"company_wallet": "%s",
 		"company_name": "%s",
 		"ceo_name": "%s",

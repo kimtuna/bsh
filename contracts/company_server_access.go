@@ -537,23 +537,23 @@ func (_CompanyServerAccess *CompanyServerAccessTransactorSession) ExtendSubscrip
 
 // RegisterCompany is a paid mutator transaction binding the contract method 0xfbb9de45.
 //
-// Solidity: function registerCompany(string _name, string _ceoName, string _email, uint256 _subscriptionType) payable returns()
-func (_CompanyServerAccess *CompanyServerAccessTransactor) RegisterCompany(opts *bind.TransactOpts, _name string, _ceoName string, _email string, _subscriptionType *big.Int) (*types.Transaction, error) {
-	return _CompanyServerAccess.contract.Transact(opts, "registerCompany", _name, _ceoName, _email, _subscriptionType)
+// Solidity: function registerCompany(address _companyWallet, string _name, string _ceoName, string _email, uint256 _subscriptionType) payable returns()
+func (_CompanyServerAccess *CompanyServerAccessTransactor) RegisterCompany(opts *bind.TransactOpts, _companyWallet common.Address, _name string, _ceoName string, _email string, _subscriptionType *big.Int) (*types.Transaction, error) {
+	return _CompanyServerAccess.contract.Transact(opts, "registerCompany", _companyWallet, _name, _ceoName, _email, _subscriptionType)
 }
 
 // RegisterCompany is a paid mutator transaction binding the contract method 0xfbb9de45.
 //
-// Solidity: function registerCompany(string _name, string _ceoName, string _email, uint256 _subscriptionType) payable returns()
-func (_CompanyServerAccess *CompanyServerAccessSession) RegisterCompany(_name string, _ceoName string, _email string, _subscriptionType *big.Int) (*types.Transaction, error) {
-	return _CompanyServerAccess.Contract.RegisterCompany(&_CompanyServerAccess.TransactOpts, _name, _ceoName, _email, _subscriptionType)
+// Solidity: function registerCompany(address _companyWallet, string _name, string _ceoName, string _email, uint256 _subscriptionType) payable returns()
+func (_CompanyServerAccess *CompanyServerAccessSession) RegisterCompany(_companyWallet common.Address, _name string, _ceoName string, _email string, _subscriptionType *big.Int) (*types.Transaction, error) {
+	return _CompanyServerAccess.Contract.RegisterCompany(&_CompanyServerAccess.TransactOpts, _companyWallet, _name, _ceoName, _email, _subscriptionType)
 }
 
 // RegisterCompany is a paid mutator transaction binding the contract method 0xfbb9de45.
 //
-// Solidity: function registerCompany(string _name, string _ceoName, string _email, uint256 _subscriptionType) payable returns()
-func (_CompanyServerAccess *CompanyServerAccessTransactorSession) RegisterCompany(_name string, _ceoName string, _email string, _subscriptionType *big.Int) (*types.Transaction, error) {
-	return _CompanyServerAccess.Contract.RegisterCompany(&_CompanyServerAccess.TransactOpts, _name, _ceoName, _email, _subscriptionType)
+// Solidity: function registerCompany(address _companyWallet, string _name, string _ceoName, string _email, uint256 _subscriptionType) payable returns()
+func (_CompanyServerAccess *CompanyServerAccessTransactorSession) RegisterCompany(_companyWallet common.Address, _name string, _ceoName string, _email string, _subscriptionType *big.Int) (*types.Transaction, error) {
+	return _CompanyServerAccess.Contract.RegisterCompany(&_CompanyServerAccess.TransactOpts, _companyWallet, _name, _ceoName, _email, _subscriptionType)
 }
 
 // SetPrices is a paid mutator transaction binding the contract method 0xa88fe42d.
