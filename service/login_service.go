@@ -41,7 +41,7 @@ func (s *CompanyService) Login(c *gin.Context) {
 	}
 
 	// 3. SSH 접속 명령어 생성
-	sshCommand := fmt.Sprintf("ssh root@%s -p %d", company.IP, company.Port)
+	sshCommand := fmt.Sprintf("ssh %s@%s -p %d", company.ServerName, company.IP, company.Port)
 
 	// 4. 응답 반환
 	c.JSON(http.StatusOK, models.Response{
