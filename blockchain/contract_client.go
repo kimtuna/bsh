@@ -284,3 +284,49 @@ func (c *ContractClient) WaitForTransaction(tx *types.Transaction) (*types.Recei
 
 	return receipt, nil
 }
+
+// CheckPayment 블록체인에서 결제 확인
+func (c *ContractClient) CheckPayment(fromAddress string, paymentAddress string, expectedAmount string) (bool, error) {
+	// 최근 10개 블록 확인
+	latestBlock, err := c.client.BlockNumber(context.Background())
+	if err != nil {
+		return false, fmt.Errorf("최신 블록 번호 조회 실패: %v", err)
+	}
+
+	// 최근 블록들에서 트랜잭션 확인
+	for i := uint64(0); i < 10; i++ {
+		blockNumber := latestBlock - i
+		if blockNumber < 0 {
+			break
+		}
+
+		block, err := c.client.BlockByNumber(context.Background(), big.NewInt(int64(blockNumber)))
+		if err != nil {
+			continue
+		}
+
+		// 블록의 트랜잭션들 확인
+		for _, tx := range block.Transactions() {
+			// from 주소 확인
+			from, err := c.client.TransactionSender(context.Background(), tx, block.Hash(), 0)
+			if err != nil {
+				continue
+			}
+
+			// to 주소 확인
+			if tx.To() == nil {
+				continue
+			}
+
+			// 결제 주소로의 전송인지 확인
+			if from.Hex() == fromAddress && tx.To().Hex() == paymentAddress {
+				// 금액 확인
+				if tx.Value().String() == expectedAmount {
+					return true, nil
+				}
+			}
+		}
+	}
+
+	return false, nil
+}

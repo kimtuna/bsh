@@ -336,3 +336,120 @@ func (s *CompanyService) UpdateSubscriptionAfterPayment(c *gin.Context) {
 		},
 	})
 }
+
+// CheckPayment 결제 확인 및 구독 업데이트
+func (s *CompanyService) CheckPayment(c *gin.Context) {
+	fmt.Printf("[DEBUG] CheckPayment 요청 시작\n")
+
+	var req struct {
+		CompanyWallet    string `json:"company_wallet" binding:"required"`
+		SubscriptionType int    `json:"subscription_type" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		fmt.Printf("[DEBUG] 요청 바인딩 실패: %v\n", err)
+		c.JSON(http.StatusBadRequest, models.Response{
+			Success: false,
+			Message: "잘못된 요청 형식: " + err.Error(),
+		})
+		return
+	}
+
+	fmt.Printf("[DEBUG] 결제 확인 요청 데이터: %+v\n", req)
+
+	// 1. 회사 정보 조회
+	var company models.CompanyRegistered
+	if err := setup.DB.Where("company_wallet = ?", req.CompanyWallet).First(&company).Error; err != nil {
+		fmt.Printf("[DEBUG] 회사 정보 조회 실패: %v\n", err)
+		c.JSON(http.StatusNotFound, models.Response{
+			Success: false,
+			Message: "등록되지 않은 회사입니다.",
+		})
+		return
+	}
+
+	// 2. 블록체인에서 결제 확인
+	paymentConfirmed, err := s.checkBlockchainPayment(req.CompanyWallet, req.SubscriptionType)
+	if err != nil {
+		fmt.Printf("[DEBUG] 블록체인 결제 확인 실패: %v\n", err)
+		c.JSON(http.StatusInternalServerError, models.Response{
+			Success: false,
+			Message: "블록체인 결제 확인 실패: " + err.Error(),
+		})
+		return
+	}
+
+	if paymentConfirmed {
+		// 3. 구독 기간 계산
+		var subscriptionDuration time.Duration
+		switch req.SubscriptionType {
+		case 1:
+			subscriptionDuration = 30 * 24 * time.Hour // 1개월
+		case 2:
+			subscriptionDuration = 90 * 24 * time.Hour // 3개월
+		case 3:
+			subscriptionDuration = 365 * 24 * time.Hour // 1년
+		default:
+			c.JSON(http.StatusBadRequest, models.Response{
+				Success: false,
+				Message: "잘못된 구독 유형입니다.",
+			})
+			return
+		}
+
+		// 4. 구독 기간 업데이트
+		newEndTime := time.Now().Add(subscriptionDuration)
+		company.SubscriptionEnd = newEndTime.Unix()
+		company.SubscriptionType = uint8(req.SubscriptionType)
+
+		if err := setup.DB.Save(&company).Error; err != nil {
+			fmt.Printf("[DEBUG] 구독 업데이트 실패: %v\n", err)
+			c.JSON(http.StatusInternalServerError, models.Response{
+				Success: false,
+				Message: "구독 업데이트 실패: " + err.Error(),
+			})
+			return
+		}
+
+		fmt.Printf("[DEBUG] 구독 업데이트 성공: %s, 새로운 만료일: %d\n", company.CompanyWallet, company.SubscriptionEnd)
+
+		c.JSON(http.StatusOK, models.Response{
+			Success: true,
+			Message: "결제 확인 완료 및 구독 연장 성공",
+			Data: map[string]interface{}{
+				"company_wallet":    company.CompanyWallet,
+				"subscription_type": req.SubscriptionType,
+				"subscription_end":  company.SubscriptionEnd,
+				"new_end_date":      newEndTime.Format("2006-01-02 15:04:05"),
+			},
+		})
+	} else {
+		c.JSON(http.StatusBadRequest, models.Response{
+			Success: false,
+			Message: "결제가 확인되지 않았습니다. 잠시 후 다시 시도해주세요.",
+		})
+	}
+}
+
+// checkBlockchainPayment 블록체인에서 결제 확인
+func (s *CompanyService) checkBlockchainPayment(fromAddress string, subscriptionType int) (bool, error) {
+	fmt.Printf("[DEBUG] 블록체인 결제 확인 시작: %s, 구독유형: %d\n", fromAddress, subscriptionType)
+
+	// 결제 주소
+	paymentAddress := "0x578C1E3bE1FD168511618B72A6A7F080eDfa7445"
+
+	// 결제 금액 (wei 단위)
+	paymentAmounts := map[int]string{
+		1: "1000000000000", // 0.000001 ETH
+		2: "2500000000000", // 0.0000025 ETH
+		3: "8000000000000", // 0.000008 ETH
+	}
+
+	expectedAmount := paymentAmounts[subscriptionType]
+	if expectedAmount == "" {
+		return false, fmt.Errorf("잘못된 구독 유형: %d", subscriptionType)
+	}
+
+	// blockchain 클라이언트를 통해 결제 확인
+	return s.contractClient.CheckPayment(fromAddress, paymentAddress, expectedAmount)
+}

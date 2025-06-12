@@ -64,6 +64,8 @@ func main() {
 		api.POST("/subscription-status", companyService.GetSubscriptionStatus)
 		// 결제 후 구독 업데이트
 		api.POST("/update-subscription", companyService.UpdateSubscriptionAfterPayment)
+		// 결제 확인
+		api.POST("/check-payment", companyService.CheckPayment)
 	}
 
 	// /bsh/api 라우트 (Nginx 프록시용)
