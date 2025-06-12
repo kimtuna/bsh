@@ -219,8 +219,33 @@
                 const receipt = await tx.wait();
                 
                 if (receipt.status === 1) {
-                    showStatus('✅ 결제 완료! 3초 후 창이 닫힙니다. 트랜잭션 해시: ' + tx.hash, 'success');
+                    showStatus('✅ 결제 완료! 서버 업데이트 중... 트랜잭션 해시: ' + tx.hash, 'success');
                     document.getElementById('pay-btn').disabled = true;
+                    
+                    // 서버에 구독 업데이트 요청
+                    try {
+                        const updateResponse = await fetch('http://localhost:1111/api/update-subscription', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                company_wallet: walletAddress,
+                                subscription_type: parseInt(subscriptionType),
+                                transaction_hash: tx.hash
+                            })
+                        });
+                        
+                        const updateResult = await updateResponse.json();
+                        
+                        if (updateResult.success) {
+                            showStatus('✅ 구독 업데이트 완료! 3초 후 창이 닫힙니다.', 'success');
+                        } else {
+                            showStatus('⚠️ 결제는 완료되었지만 서버 업데이트에 실패했습니다: ' + updateResult.message, 'error');
+                        }
+                    } catch (error) {
+                        showStatus('⚠️ 결제는 완료되었지만 서버 업데이트에 실패했습니다: ' + error.message, 'error');
+                    }
                     
                     // 3초 후 창 닫기
                     setTimeout(() => {
