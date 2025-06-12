@@ -456,7 +456,7 @@ func charge() {
 	color.Yellow("- 결제 금액: %s", priceText)
 	color.Yellow("- 회사 지갑: %s", companyWallet)
 
-	// 메타마스크 결제 페이지 URL 생성
+	// 메타마스크 결제 페0xe6d0a066abb10684765b6a2e10a8be135a5ceaad이지 URL 생성
 	paymentURL := fmt.Sprintf("https://www.kimtuna.kr/payment?wallet=%s&type=%s", companyWallet, subscriptionType)
 
 	color.Cyan("\n🌐 메타마스크 결제 페이지를 브라우저에서 열어주세요:")
