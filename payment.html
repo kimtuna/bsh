@@ -170,6 +170,11 @@
                 
                 const connectedAddress = accounts[0];
                 
+                console.log('URL 파라미터 지갑 주소:', walletAddress);
+                console.log('연결된 지갑 주소:', connectedAddress);
+                console.log('URL 파라미터 지갑 주소 (소문자):', walletAddress.toLowerCase());
+                console.log('연결된 지갑 주소 (소문자):', connectedAddress.toLowerCase());
+                
                 // 지갑 주소가 일치하는지 확인
                 if (connectedAddress.toLowerCase() !== walletAddress.toLowerCase()) {
                     showStatus(`지갑 주소가 일치하지 않습니다. ${walletAddress}로 연결해주세요.`, 'error');
