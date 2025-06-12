@@ -239,7 +239,7 @@
                         const updateResult = await updateResponse.json();
                         
                         if (updateResult.success) {
-                            showStatus('✅ 구독 업데이트 완료! 3초 후 창이 닫힙니다.', 'success');
+                            showStatus('✅ 구독 업데이트 완료! 창이 닫힙니다.', 'success');
                         } else {
                             showStatus('⚠️ 결제는 완료되었지만 서버 업데이트에 실패했습니다: ' + updateResult.message, 'error');
                         }
@@ -247,10 +247,6 @@
                         showStatus('⚠️ 결제는 완료되었지만 서버 업데이트에 실패했습니다: ' + error.message, 'error');
                     }
                     
-                    // 3초 후 창 닫기
-                    setTimeout(() => {
-                        window.close();
-                    }, 3000);
                 } else {
                     showStatus('❌ 트랜잭션이 실패했습니다.', 'error');
                 }
