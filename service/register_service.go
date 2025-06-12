@@ -202,8 +202,9 @@ func (s *CompanyService) GetSubscriptionStatus(c *gin.Context) {
 	}
 
 	// 2. 데이터베이스에서 회사 정보 조회
-	company, err := setup.GetServerAccess(req.CompanyWallet)
-	if err != nil {
+	var company models.CompanyRegistered
+	if err := setup.DB.Where("company_wallet = ?", req.CompanyWallet).First(&company).Error; err != nil {
+		fmt.Printf("[DEBUG] 회사 정보 조회 실패: %v\n", err)
 		c.JSON(http.StatusNotFound, models.Response{
 			Success: false,
 			Message: "등록되지 않은 회사입니다",
@@ -270,8 +271,9 @@ func (s *CompanyService) UpdateSubscriptionAfterPayment(c *gin.Context) {
 	}
 
 	// 2. 데이터베이스에서 회사 정보 조회
-	company, err := setup.GetServerAccess(req.CompanyWallet)
-	if err != nil {
+	var company models.CompanyRegistered
+	if err := setup.DB.Where("company_wallet = ?", req.CompanyWallet).First(&company).Error; err != nil {
+		fmt.Printf("[DEBUG] 회사 정보 조회 실패: %v\n", err)
 		c.JSON(http.StatusNotFound, models.Response{
 			Success: false,
 			Message: "등록되지 않은 회사입니다",
@@ -309,8 +311,10 @@ func (s *CompanyService) UpdateSubscriptionAfterPayment(c *gin.Context) {
 	}
 
 	// 5. 데이터베이스 업데이트
-	err = setup.UpdateSubscriptionInfo(req.CompanyWallet, req.SubscriptionType, newEndTime.Unix())
-	if err != nil {
+	company.SubscriptionEnd = newEndTime.Unix()
+	company.SubscriptionType = req.SubscriptionType
+
+	if err := setup.DB.Save(&company).Error; err != nil {
 		fmt.Printf("[DEBUG] 데이터베이스 업데이트 실패: %v\n", err)
 		c.JSON(http.StatusInternalServerError, models.Response{
 			Success: false,
@@ -329,7 +333,7 @@ func (s *CompanyService) UpdateSubscriptionAfterPayment(c *gin.Context) {
 			"company_wallet":    req.CompanyWallet,
 			"company_name":      company.CompanyName,
 			"subscription_type": req.SubscriptionType,
-			"subscription_end":  newEndTime.Unix(),
+			"subscription_end":  company.SubscriptionEnd,
 			"is_active":         true,
 			"transaction_hash":  req.TransactionHash,
 			"updated_at":        now.Format(time.RFC3339),
