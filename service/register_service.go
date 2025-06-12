@@ -6,8 +6,6 @@ import (
 	"os/exec"
 	"time"
 
-	"log"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gin-gonic/gin"
 	"github.com/kimtuna/bsh/blockchain"
@@ -37,15 +35,23 @@ func testServerAccess(ip string, port uint16, username string, password string) 
 }
 
 // RegisterCompanyInternal 회사 등록 처리
-func (s *CompanyService) RegisterCompanyInternal(req models.RegisterRequest) error {
-	// 1. 서버 접근 테스트
-	if err := testServerAccess(req.IP, req.Port, req.ServerName, req.Password); err != nil {
-		return fmt.Errorf("서버 접근 실패: %v", err)
+func (s *CompanyService) RegisterCompanyInternal(req models.RegisterRequest) (*models.Response, error) {
+	fmt.Printf("[DEBUG] RegisterCompanyInternal 요청 시작\n")
+
+	// 1. 이더리움 주소 유효성 검사
+	if !common.IsHexAddress(req.CompanyWallet) {
+		return &models.Response{
+			Success: false,
+			Message: "유효하지 않은 이더리움 주소",
+		}, nil
 	}
 
-	// 2. 이더리움 주소 유효성 검사
-	if !common.IsHexAddress(req.CompanyWallet) {
-		return fmt.Errorf("유효하지 않은 이더리움 주소")
+	// 2. 서버 접근 테스트
+	if err := testServerAccess(req.IP, req.Port, req.ServerName, req.Password); err != nil {
+		return &models.Response{
+			Success: false,
+			Message: "서버 접근 테스트 실패: " + err.Error(),
+		}, nil
 	}
 
 	// 3. 스마트 컨트랙트를 통한 회사 등록 트랜잭션 실행
@@ -57,39 +63,93 @@ func (s *CompanyService) RegisterCompanyInternal(req models.RegisterRequest) err
 		req.SubscriptionType,
 	)
 	if err != nil {
-		return fmt.Errorf("회사 등록 트랜잭션 실패: %v", err)
+		fmt.Printf("[DEBUG] 회사 등록 트랜잭션 실패: %v\n", err)
+		return &models.Response{
+			Success: false,
+			Message: "회사 등록 트랜잭션 실패: " + err.Error(),
+		}, nil
 	}
 
 	// 4. 트랜잭션 영수증 확인
 	receipt, err := s.contractClient.WaitForTransaction(tx)
 	if err != nil {
-		return fmt.Errorf("트랜잭션 확인 실패: %v", err)
+		fmt.Printf("[DEBUG] 트랜잭션 확인 실패: %v\n", err)
+		return &models.Response{
+			Success: false,
+			Message: "트랜잭션 확인 실패: " + err.Error(),
+		}, nil
 	}
 
 	// 5. 트랜잭션이 성공했는지 확인
 	if receipt.Status != 1 {
-		return fmt.Errorf("트랜잭션이 실패했습니다")
+		return &models.Response{
+			Success: false,
+			Message: "트랜잭션이 실패했습니다",
+		}, nil
 	}
 
-	// 6. 서버 접근 정보 저장
-	err = setup.SaveServerAccess(req.CompanyWallet, req.Email, req.IP, req.ServerName, req.Port)
-	if err != nil {
-		return fmt.Errorf("서버 접근 정보 저장 실패: %v", err)
+	// 6. 데이터베이스에 회사 정보 저장
+	company := &models.CompanyRegistered{
+		CompanyWallet:    req.CompanyWallet,
+		CompanyName:      req.CompanyName,
+		CeoName:          req.CeoName,
+		Email:            req.Email,
+		SubscriptionType: req.SubscriptionType,
+		IP:               req.IP,
+		ServerName:       req.ServerName,
+		Port:             req.Port,
+		IsActive:         true,
 	}
 
-	return nil
+	// 구독 기간 계산
+	var subscriptionDuration time.Duration
+	switch req.SubscriptionType {
+	case 1:
+		subscriptionDuration = 30 * 24 * time.Hour // 1개월
+	case 2:
+		subscriptionDuration = 90 * 24 * time.Hour // 3개월
+	case 3:
+		subscriptionDuration = 365 * 24 * time.Hour // 1년
+	default:
+		return &models.Response{
+			Success: false,
+			Message: "유효하지 않은 구독 유형",
+		}, nil
+	}
+
+	company.SubscriptionEnd = time.Now().Add(subscriptionDuration).Unix()
+
+	if err := setup.DB.Create(company).Error; err != nil {
+		fmt.Printf("[DEBUG] 데이터베이스 저장 실패: %v\n", err)
+		return &models.Response{
+			Success: false,
+			Message: "데이터베이스 저장 실패: " + err.Error(),
+		}, nil
+	}
+
+	fmt.Printf("[DEBUG] 회사 등록 완료: %s\n", req.CompanyWallet)
+
+	return &models.Response{
+		Success: true,
+		Message: "회사 등록이 완료되었습니다",
+		Data: map[string]interface{}{
+			"company_wallet":    company.CompanyWallet,
+			"company_name":      company.CompanyName,
+			"subscription_type": company.SubscriptionType,
+			"subscription_end":  company.SubscriptionEnd,
+			"is_active":         true,
+			"registered_at":     time.Unix(company.CreatedAt, 0).Format(time.RFC3339),
+		},
+	}, nil
 }
 
-// RegisterCompany Gin 핸들러
+// RegisterCompany 회사 등록 API 핸들러
 func (s *CompanyService) RegisterCompany(c *gin.Context) {
 	fmt.Printf("[DEBUG] RegisterCompany 요청 시작\n")
 
 	var req models.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		fmt.Printf("[DEBUG] JSON 바인딩 오류: %v\n", err)
-		if body, err := c.GetRawData(); err == nil {
-			fmt.Printf("[DEBUG] 요청 본문: %s\n", string(body))
-		}
 		c.JSON(http.StatusBadRequest, models.Response{
 			Success: false,
 			Message: "잘못된 요청 형식: " + err.Error(),
@@ -97,35 +157,182 @@ func (s *CompanyService) RegisterCompany(c *gin.Context) {
 		return
 	}
 
-	fmt.Printf("[DEBUG] 요청 데이터: %+v\n", req)
+	fmt.Printf("[DEBUG] 회사 등록 요청 데이터: %+v\n", req)
 
-	// 서버 연결 테스트 (직접 ping 사용)
-	if err := testServerAccess(req.IP, req.Port, req.ServerName, req.Password); err != nil {
-		log.Printf("Server connection test failed: %v", err)
-		c.JSON(http.StatusBadRequest, models.Response{
+	resp, err := s.RegisterCompanyInternal(req)
+	if err != nil {
+		fmt.Printf("[DEBUG] 내부 처리 오류: %v\n", err)
+		c.JSON(http.StatusInternalServerError, models.Response{
 			Success: false,
-			Message: err.Error(),
+			Message: "서버 내부 오류: " + err.Error(),
 		})
 		return
 	}
 
-	if err := s.RegisterCompanyInternal(req); err != nil {
-		fmt.Printf("[DEBUG] 회사 등록 실패: %v\n", err)
+	if resp.Success {
+		c.JSON(http.StatusOK, *resp)
+	} else {
+		c.JSON(http.StatusBadRequest, *resp)
+	}
+}
+
+// GetSubscriptionStatus 구독 상태 조회
+func (s *CompanyService) GetSubscriptionStatus(c *gin.Context) {
+	fmt.Printf("[DEBUG] GetSubscriptionStatus 요청 시작\n")
+
+	var req models.SubscriptionStatusRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		fmt.Printf("[DEBUG] JSON 바인딩 오류: %v\n", err)
 		c.JSON(http.StatusBadRequest, models.Response{
 			Success: false,
-			Message: err.Error(),
+			Message: "잘못된 요청 형식: " + err.Error(),
 		})
 		return
 	}
 
-	fmt.Printf("[DEBUG] 회사 등록 성공: %s\n", req.CompanyWallet)
+	fmt.Printf("[DEBUG] 구독 상태 조회 요청 데이터: %+v\n", req)
+
+	// 1. 이더리움 주소 유효성 검사
+	if !common.IsHexAddress(req.CompanyWallet) {
+		c.JSON(http.StatusBadRequest, models.Response{
+			Success: false,
+			Message: "유효하지 않은 이더리움 주소",
+		})
+		return
+	}
+
+	// 2. 데이터베이스에서 회사 정보 조회
+	company, err := setup.GetServerAccess(req.CompanyWallet)
+	if err != nil {
+		c.JSON(http.StatusNotFound, models.Response{
+			Success: false,
+			Message: "등록되지 않은 회사입니다",
+		})
+		return
+	}
+
+	// 3. 구독 상태 계산
+	now := time.Now()
+	subscriptionEndTime := time.Unix(company.SubscriptionEnd, 0)
+	isExpired := now.After(subscriptionEndTime)
+	remainingDays := int(subscriptionEndTime.Sub(now).Hours() / 24)
+	if remainingDays < 0 {
+		remainingDays = 0
+	}
+
+	// 4. 응답 반환
 	c.JSON(http.StatusOK, models.Response{
 		Success: true,
-		Message: "회원가입이 완료되었습니다",
+		Message: "구독 상태 조회 성공",
 		Data: map[string]interface{}{
-			"company_wallet": req.CompanyWallet,
-			"company_name":   req.CompanyName,
-			"registered_at":  time.Now().Format(time.RFC3339),
+			"company_wallet":    company.CompanyWallet,
+			"company_name":      company.CompanyName,
+			"ceo_name":          company.CeoName,
+			"email":             company.Email,
+			"subscription_type": company.SubscriptionType,
+			"subscription_end":  company.SubscriptionEnd,
+			"is_active":         !isExpired,
+			"is_expired":        isExpired,
+			"remaining_days":    remainingDays,
+			"checked_at":        now.Format(time.RFC3339),
+		},
+	})
+}
+
+// UpdateSubscriptionAfterPayment 결제 완료 후 구독 업데이트
+func (s *CompanyService) UpdateSubscriptionAfterPayment(c *gin.Context) {
+	fmt.Printf("[DEBUG] UpdateSubscriptionAfterPayment 요청 시작\n")
+
+	var req struct {
+		CompanyWallet    string `json:"company_wallet" binding:"required"`
+		SubscriptionType uint8  `json:"subscription_type" binding:"required,min=1,max=3"`
+		TransactionHash  string `json:"transaction_hash" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		fmt.Printf("[DEBUG] JSON 바인딩 오류: %v\n", err)
+		c.JSON(http.StatusBadRequest, models.Response{
+			Success: false,
+			Message: "잘못된 요청 형식: " + err.Error(),
+		})
+		return
+	}
+
+	fmt.Printf("[DEBUG] 구독 업데이트 요청 데이터: %+v\n", req)
+
+	// 1. 이더리움 주소 유효성 검사
+	if !common.IsHexAddress(req.CompanyWallet) {
+		c.JSON(http.StatusBadRequest, models.Response{
+			Success: false,
+			Message: "유효하지 않은 이더리움 주소",
+		})
+		return
+	}
+
+	// 2. 데이터베이스에서 회사 정보 조회
+	company, err := setup.GetServerAccess(req.CompanyWallet)
+	if err != nil {
+		c.JSON(http.StatusNotFound, models.Response{
+			Success: false,
+			Message: "등록되지 않은 회사입니다",
+		})
+		return
+	}
+
+	// 3. 구독 기간 계산
+	var subscriptionDuration time.Duration
+	switch req.SubscriptionType {
+	case 1:
+		subscriptionDuration = 30 * 24 * time.Hour // 1개월
+	case 2:
+		subscriptionDuration = 90 * 24 * time.Hour // 3개월
+	case 3:
+		subscriptionDuration = 365 * 24 * time.Hour // 1년
+	default:
+		c.JSON(http.StatusBadRequest, models.Response{
+			Success: false,
+			Message: "유효하지 않은 구독 유형",
+		})
+		return
+	}
+
+	// 4. 구독 만료일 업데이트 (기존 만료일에서 연장)
+	currentEndTime := time.Unix(company.SubscriptionEnd, 0)
+	now := time.Now()
+
+	// 현재 시간이 만료일보다 늦으면 현재 시간부터, 아니면 기존 만료일부터 연장
+	var newEndTime time.Time
+	if now.After(currentEndTime) {
+		newEndTime = now.Add(subscriptionDuration)
+	} else {
+		newEndTime = currentEndTime.Add(subscriptionDuration)
+	}
+
+	// 5. 데이터베이스 업데이트
+	err = setup.UpdateSubscriptionInfo(req.CompanyWallet, req.SubscriptionType, newEndTime.Unix())
+	if err != nil {
+		fmt.Printf("[DEBUG] 데이터베이스 업데이트 실패: %v\n", err)
+		c.JSON(http.StatusInternalServerError, models.Response{
+			Success: false,
+			Message: "데이터베이스 업데이트 실패: " + err.Error(),
+		})
+		return
+	}
+
+	fmt.Printf("[DEBUG] 구독 업데이트 완료: %s\n", req.CompanyWallet)
+
+	// 6. 응답 반환
+	c.JSON(http.StatusOK, models.Response{
+		Success: true,
+		Message: "구독이 성공적으로 연장되었습니다",
+		Data: map[string]interface{}{
+			"company_wallet":    req.CompanyWallet,
+			"company_name":      company.CompanyName,
+			"subscription_type": req.SubscriptionType,
+			"subscription_end":  newEndTime.Unix(),
+			"is_active":         true,
+			"transaction_hash":  req.TransactionHash,
+			"updated_at":        now.Format(time.RFC3339),
 		},
 	})
 }

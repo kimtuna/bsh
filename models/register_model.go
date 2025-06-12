@@ -12,6 +12,10 @@ type RegisterRequest struct {
 	Password         string `json:"password" binding:"required"` // SSH 비밀번호
 }
 
+type SubscriptionStatusRequest struct {
+	CompanyWallet string `json:"company_wallet" binding:"required"`
+}
+
 type Response struct {
 	Success bool        `json:"success"`
 	Message string      `json:"message"`
@@ -19,12 +23,16 @@ type Response struct {
 }
 
 type CompanyRegistered struct {
-	CompanyWallet string `gorm:"primaryKey;column:company_wallet;type:varchar(191)"` // 이더리움 지갑 주소
-	Email         string `gorm:"uniqueIndex:email;type:varchar(50)"`
-	IP            string `gorm:"type:varchar(50)"`
-	ServerName    string `gorm:"type:varchar(30)"`
-	Port          uint16 `gorm:"type:smallint unsigned"`
-	IsActive      bool
-	CreatedAt     int64 `gorm:"autoCreateTime"` // Unix timestamp
-	UpdatedAt     int64 `gorm:"autoUpdateTime"` // Unix timestamp
+	CompanyWallet    string `gorm:"primaryKey;column:company_wallet;type:varchar(191)"` // 이더리움 지갑 주소
+	CompanyName      string `gorm:"type:varchar(100)"`                                  // 회사 이름
+	CeoName          string `gorm:"type:varchar(50)"`                                   // 대표자 이름
+	Email            string `gorm:"uniqueIndex:email;type:varchar(50)"`
+	IP               string `gorm:"type:varchar(50)"`
+	ServerName       string `gorm:"type:varchar(30)"`
+	Port             uint16 `gorm:"type:smallint unsigned"`
+	SubscriptionType uint8  `gorm:"type:tinyint unsigned"` // 1: 1개월, 2: 3개월, 3: 1년
+	SubscriptionEnd  int64  `gorm:"type:bigint"`           // 구독 만료일 (Unix timestamp)
+	IsActive         bool
+	CreatedAt        int64 `gorm:"autoCreateTime"` // Unix timestamp
+	UpdatedAt        int64 `gorm:"autoUpdateTime"` // Unix timestamp
 }

@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/kimtuna/bsh/models"
@@ -73,14 +74,18 @@ func ConnectDatabase() error {
 }
 
 // SaveServerAccess 서버 접근 정보 저장
-func SaveServerAccess(companyWallet, email, ip, serverName string, port uint16) error {
+func SaveServerAccess(companyWallet, companyName, ceoName, email, ip, serverName string, port uint16, subscriptionType uint8, subscriptionEnd int64) error {
 	company := &models.CompanyRegistered{
-		CompanyWallet: companyWallet,
-		Email:         email,
-		IP:            ip,
-		ServerName:    serverName,
-		Port:          port,
-		IsActive:      true,
+		CompanyWallet:    companyWallet,
+		CompanyName:      companyName,
+		CeoName:          ceoName,
+		Email:            email,
+		IP:               ip,
+		ServerName:       serverName,
+		Port:             port,
+		SubscriptionType: subscriptionType,
+		SubscriptionEnd:  subscriptionEnd,
+		IsActive:         true,
 	}
 	return DB.Create(company).Error
 }
@@ -106,4 +111,42 @@ func DeactivateServerAccess(companyWallet string) error {
 	}
 
 	return nil
+}
+
+// UpdateSubscriptionInfo 구독 정보 업데이트
+func UpdateSubscriptionInfo(companyWallet string, subscriptionType uint8, subscriptionEnd int64) error {
+	result := DB.Model(&models.CompanyRegistered{}).
+		Where("company_wallet = ? AND is_active = ?", companyWallet, true).
+		Updates(map[string]interface{}{
+			"subscription_type": subscriptionType,
+			"subscription_end":  subscriptionEnd,
+		})
+	if result.Error != nil {
+		return fmt.Errorf("failed to update subscription info: %v", result.Error)
+	}
+
+	return nil
+}
+
+// GetSubscriptionInfo 구독 정보 조회
+func GetSubscriptionInfo(companyWallet string) (*models.CompanyRegistered, error) {
+	var company models.CompanyRegistered
+	result := DB.Where("company_wallet = ? AND is_active = ?", companyWallet, true).First(&company)
+	if result.Error != nil {
+		return nil, fmt.Errorf("failed to get subscription info: %v", result.Error)
+	}
+
+	return &company, nil
+}
+
+// CheckSubscriptionExpired 구독 만료 확인
+func CheckSubscriptionExpired(companyWallet string) (bool, error) {
+	company, err := GetSubscriptionInfo(companyWallet)
+	if err != nil {
+		return false, err
+	}
+
+	// 현재 시간과 구독 만료일 비교
+	currentTime := time.Now().Unix()
+	return currentTime > company.SubscriptionEnd, nil
 }

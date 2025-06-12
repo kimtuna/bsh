@@ -248,6 +248,26 @@ func (c *ContractClient) RegisterCompany(companyWallet common.Address, name, ceo
 	return tx, nil
 }
 
+// ExtendSubscription 구독 연장 트랜잭션 실행
+func (c *ContractClient) ExtendSubscription(companyWallet common.Address, subscriptionType uint8) (*types.Transaction, error) {
+	// 구독 가격 계산
+	price, err := c.contract.GetSubscriptionPrice(nil, big.NewInt(int64(subscriptionType)))
+	if err != nil {
+		return nil, fmt.Errorf("구독 가격 조회 실패: %v", err)
+	}
+
+	// 트랜잭션 옵션 설정
+	c.auth.Value = price
+
+	// 구독 연장 트랜잭션 실행 (현재 바인딩에서는 _subscriptionType만 받음)
+	tx, err := c.contract.ExtendSubscription(c.auth, big.NewInt(int64(subscriptionType)))
+	if err != nil {
+		return nil, fmt.Errorf("구독 연장 트랜잭션 실패: %v", err)
+	}
+
+	return tx, nil
+}
+
 // WaitForTransaction 트랜잭션 영수증 대기
 func (c *ContractClient) WaitForTransaction(tx *types.Transaction) (*types.Receipt, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
