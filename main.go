@@ -50,9 +50,6 @@ func main() {
 		c.Next()
 	})
 
-	// 정적 파일 서빙 (payment.html)
-	r.StaticFile("/payment", "./payment.html")
-
 	// API 라우트
 	api := r.Group("/api")
 	{
@@ -62,8 +59,6 @@ func main() {
 		api.POST("/login", companyService.Login)
 		// 구독 상태 조회
 		api.POST("/subscription-status", companyService.GetSubscriptionStatus)
-		// 결제 완료 후 구독 업데이트
-		api.POST("/update-subscription", companyService.UpdateSubscriptionAfterPayment)
 	}
 
 	// /bsh/api 라우트 (Nginx 프록시용)
@@ -77,8 +72,6 @@ func main() {
 			bshApi.POST("/login", companyService.Login)
 			// 구독 상태 조회
 			bshApi.POST("/subscription-status", companyService.GetSubscriptionStatus)
-			// 결제 완료 후 구독 업데이트
-			bshApi.POST("/update-subscription", companyService.UpdateSubscriptionAfterPayment)
 		}
 	}
 

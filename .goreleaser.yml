@@ -9,7 +9,7 @@ builds:
       - darwin
     goarch:
       - arm64  # M1/M2 맥만 지원
-    main: ./cmd/bsh
+    main: ./cmd/brew-bsh
     binary: bsh
 
 archives:
