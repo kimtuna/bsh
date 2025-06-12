@@ -27,6 +27,7 @@ RUN apk add --no-cache ca-certificates tzdata
 COPY --from=builder /app/bsh-api .
 COPY .env .
 COPY abi.json .
+COPY payment.html .
 
 # 실행 권한 설정
 RUN chmod +x bsh-api
